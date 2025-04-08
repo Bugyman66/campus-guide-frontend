@@ -8,6 +8,8 @@ React frontend application for the Campus Guide system.
 - Community chat
 - Accommodation booking
 - Payment integration
+- vtu portal
+- school portal
 
 ## Setup
 
