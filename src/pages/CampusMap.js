@@ -1,28 +1,45 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { MapContainer as LeafletMap, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
-// Fix for default marker icons
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-    iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
-    iconUrl: require('leaflet/dist/images/marker-icon.png'),
-    shadowUrl: require('leaflet/dist/images/marker-shadow.png')
-});
-
 const CampusMap = () => {
-    // Example coordinates for your campus - replace with actual coordinates
-    const campusCenter = [9.0820, 8.6753]; // Nigeria coordinates
+    // Move useEffect inside the component
+    useEffect(() => {
+        delete L.Icon.Default.prototype._getIconUrl;
+        L.Icon.Default.mergeOptions({
+            iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
+            iconUrl: require('leaflet/dist/images/marker-icon.png'),
+            shadowUrl: require('leaflet/dist/images/marker-shadow.png')
+        });
+    }, []);
+
+    // FUD coordinates
+    const campusCenter = [11.8061, 9.3364]; // Federal University Dutse coordinates
+    
     const campusLocations = [
         {
-            position: [9.0820, 8.6753],
-            name: 'Main Building',
-            description: 'Administrative headquarters'
+            position: [11.8061, 9.3364],
+            name: 'Main Campus',
+            description: 'Federal University Dutse Main Campus'
         },
-        // Add more campus locations as needed
+        {
+            position: [11.8065, 9.3370],
+            name: 'Faculty of Computing',
+            description: 'Faculty of Computing and Information Sciences'
+        },
+        {
+            position: [11.8058, 9.3360],
+            name: 'University Library',
+            description: 'Central Library'
+        },
+        {
+            position: [11.8063, 9.3368],
+            name: 'Student Center',
+            description: 'Student Activities and Recreation'
+        }
     ];
 
     return (
@@ -32,8 +49,8 @@ const CampusMap = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
             >
-                <Title>Campus Map</Title>
-                <Subtitle>Find your way around the campus with ease</Subtitle>
+                <Title>FUD Campus Map</Title>
+                <Subtitle>Navigate Federal University Dutse with ease</Subtitle>
             </Header>
             
             <MapWrapper
@@ -41,13 +58,21 @@ const CampusMap = () => {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
             >
-                <StyledMap center={campusCenter} zoom={16} scrollWheelZoom={true}>
+                <StyledMap 
+                    center={campusCenter} 
+                    zoom={17} 
+                    scrollWheelZoom={true}
+                    style={{ height: '600px', width: '100%' }}
+                >
                     <TileLayer
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     />
                     {campusLocations.map((location, index) => (
-                        <Marker key={index} position={location.position}>
+                        <Marker 
+                            key={index} 
+                            position={location.position}
+                        >
                             <Popup>
                                 <PopupContent>
                                     <h3>{location.name}</h3>
@@ -58,6 +83,16 @@ const CampusMap = () => {
                     ))}
                 </StyledMap>
             </MapWrapper>
+
+            <Legend>
+                <LegendTitle>Campus Locations</LegendTitle>
+                {campusLocations.map((location, index) => (
+                    <LegendItem key={index}>
+                        <LegendIcon>📍</LegendIcon>
+                        <LegendText>{location.name}</LegendText>
+                    </LegendItem>
+                ))}
+            </Legend>
         </PageContainer>
     );
 };
@@ -101,9 +136,10 @@ const MapWrapper = styled(motion.div)`
     box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
 `;
 
-const StyledMap = styled(LeafletMap)`
-    height: 100%;
-    width: 100%;
+const StyledMap = styled(MapContainer)`
+    height: 600px !important;
+    width: 100% !important;
+    border-radius: 12px;
     z-index: 1;
 `;
 
@@ -118,6 +154,35 @@ const PopupContent = styled.div`
         margin: 0;
         color: #333;
     }
+`;
+
+const Legend = styled.div`
+    background: rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    border-radius: 12px;
+    margin-top: 20px;
+    backdrop-filter: blur(10px);
+`;
+
+const LegendTitle = styled.h3`
+    color: #63f5ef;
+    margin: 0 0 16px 0;
+    font-family: 'Rajdhani', sans-serif;
+`;
+
+const LegendItem = styled.div`
+    display: flex;
+    align-items: center;
+    margin: 8px 0;
+    color: white;
+`;
+
+const LegendIcon = styled.span`
+    margin-right: 8px;
+`;
+
+const LegendText = styled.span`
+    font-family: 'Rajdhani', sans-serif;
 `;
 
 export default CampusMap;

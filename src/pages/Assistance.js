@@ -12,9 +12,12 @@ const Assistance = () => {
     const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef(null);
 
-    // Debug logging
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
     useEffect(() => {
-        console.log('Messages updated:', messages);
+        scrollToBottom();
     }, [messages]);
 
     const handleSubmit = async (e) => {
@@ -22,39 +25,77 @@ const Assistance = () => {
         if (!input.trim() || isLoading) return;
 
         const userMessage = input.trim();
-        console.log('Sending message:', userMessage);
-        
-        // Clear input immediately
+        console.log('Sending message:', userMessage); // Debug log
+
+        // Clear input and add user message immediately
         setInput("");
-        
-        // Add user message to chat
-        setMessages(prev => [...prev, { from: "user", text: userMessage }]);
-        
+        setMessages(prev => [...prev, { 
+            from: "user", 
+            text: userMessage,
+            timestamp: new Date().toISOString()
+        }]);
+
         setIsLoading(true);
         try {
-            const response = await getAIResponse(userMessage);
-            console.log('Received AI response:', response);
-            
-            // Add AI response to chat
-            setMessages(prev => [...prev, { from: "ai", text: response }]);
-        } catch (error) {
-            console.error('Error:', error);
-            setMessages(prev => [...prev, {
-                from: "ai",
-                text: "Sorry, I encountered an error. Please try again."
+            // Show typing indicator
+            setMessages(prev => [...prev, { 
+                from: "ai", 
+                text: "...",
+                isTyping: true 
             }]);
+
+            const response = await getAIResponse(userMessage);
+            console.log('Received AI response:', response); // Debug log
+
+            // Remove typing indicator and add AI response
+            setMessages(prev => {
+                const filteredMessages = prev.filter(msg => !msg.isTyping);
+                return [...filteredMessages, { 
+                    from: "ai", 
+                    text: response,
+                    timestamp: new Date().toISOString()
+                }];
+            });
+
+        } catch (error) {
+            console.error('Chat Error:', error);
+            setMessages(prev => {
+                const filteredMessages = prev.filter(msg => !msg.isTyping);
+                return [...filteredMessages, {
+                    from: "ai",
+                    text: "Sorry, I encountered an error. Please try again.",
+                    timestamp: new Date().toISOString(),
+                    isError: true
+                }];
+            });
         } finally {
             setIsLoading(false);
-            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
         }
     };
 
     return (
         <Container>
+            <ChatHeader>AI Assistant</ChatHeader>
+            
             <ChatBox>
                 {messages.map((msg, idx) => (
-                    <MessageBubble key={idx} from={msg.from}>
-                        <MessageText>{msg.text}</MessageText>
+                    <MessageBubble 
+                        key={idx} 
+                        from={msg.from}
+                        isTyping={msg.isTyping}
+                        isError={msg.isError}
+                    >
+                        <MessageText>
+                            {msg.isTyping ? (
+                                <TypingIndicator>
+                                    <span>●</span>
+                                    <span>●</span>
+                                    <span>●</span>
+                                </TypingIndicator>
+                            ) : (
+                                msg.text
+                            )}
+                        </MessageText>
                     </MessageBubble>
                 ))}
                 <div ref={messagesEndRef} />
@@ -68,7 +109,10 @@ const Assistance = () => {
                         placeholder="Type your message..."
                         disabled={isLoading}
                     />
-                    <SendButton type="submit" disabled={isLoading || !input.trim()}>
+                    <SendButton 
+                        type="submit" 
+                        disabled={isLoading || !input.trim()}
+                    >
                         <Send />
                     </SendButton>
                 </InputContainer>
@@ -76,6 +120,40 @@ const Assistance = () => {
         </Container>
     );
 };
+
+// Add these new styled components
+const TypingIndicator = styled.div`
+    display: flex;
+    gap: 4px;
+    
+    span {
+        animation: bounce 1.4s infinite ease-in-out;
+        
+        &:nth-child(1) { animation-delay: 0s; }
+        &:nth-child(2) { animation-delay: 0.2s; }
+        &:nth-child(3) { animation-delay: 0.4s; }
+    }
+
+    @keyframes bounce {
+        0%, 80%, 100% { transform: scale(0.6); }
+        40% { transform: scale(1); }
+    }
+`;
+
+// Update MessageBubble styling
+const MessageBubble = styled.div`
+    padding: 0.8rem;
+    border-radius: 12px;
+    max-width: 80%;
+    opacity: ${props => props.isTyping ? 0.7 : 1};
+    ${props => props.from === 'user' ? `
+        margin-left: auto;
+        background: #2196f3;
+    ` : `
+        margin-right: auto;
+        background: ${props.isError ? '#ff4444' : '#424242'};
+    `}
+`;
 
 const Container = styled.div`
     display: flex;
@@ -100,19 +178,6 @@ const ChatBox = styled.div`
     display: flex;
     flex-direction: column;
     gap: 1rem;
-`;
-
-const MessageBubble = styled.div`
-    padding: 0.8rem;
-    border-radius: 12px;
-    max-width: 80%;
-    ${props => props.from === 'user' ? `
-        margin-left: auto;
-        background: #2196f3;
-    ` : `
-        margin-right: auto;
-        background: #424242;
-    `}
 `;
 
 const MessageText = styled.div`

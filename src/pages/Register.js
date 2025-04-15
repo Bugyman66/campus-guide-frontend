@@ -242,6 +242,22 @@ const StyledTextField = styled(TextField)`
         &:hover fieldset {
             border-color: rgba(255, 255, 255, 0.2);
         }
+
+        // Style for the select input
+        select {
+            color: #fff;
+            background: transparent;
+
+            // Style for the options
+            option {
+                background: #1a1a2e;
+                color: #fff;
+                padding: 12px;
+                &:hover {
+                    background: #2a2a4e;
+                }
+            }
+        }
     }
     
     .MuiInputLabel-root {
@@ -250,6 +266,16 @@ const StyledTextField = styled(TextField)`
     
     .MuiOutlinedInput-input {
         color: #fff;
+    }
+
+    // Style for the select dropdown
+    .MuiSelect-select {
+        color: #fff;
+    }
+
+    // Style for placeholder option
+    select option[value=""] {
+        color: rgba(255, 255, 255, 0.5);
     }
 `;
 

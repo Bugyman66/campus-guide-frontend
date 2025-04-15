@@ -18,11 +18,14 @@ const CommunityChat = () => {
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [selectedImage, setSelectedImage] = useState(null);
+    const [isTyping, setIsTyping] = useState(false);
+    const [typingUsers, setTypingUsers] = useState(new Set());
     const prevUsersRef = useRef(new Map());
     const presenceRef = useRef(null);
     const messagesEndRef = useRef(null);
     const emojiPickerRef = useRef(null);
     const fileInputRef = useRef(null);
+    const typingTimeout = useRef(null);
     const navigate = useNavigate();
     const user = JSON.parse(localStorage.getItem('user'));
 
@@ -106,6 +109,24 @@ const CommunityChat = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    useEffect(() => {
+        const typingRef = ref(db, 'typing');
+        
+        const unsubTyping = onValue(typingRef, (snapshot) => {
+            if (snapshot.exists()) {
+                const typing = snapshot.val();
+                const currentTyping = new Set(
+                    Object.entries(typing)
+                        .filter(([id, data]) => data.isTyping && id !== user.id)
+                        .map(([_, data]) => data.name)
+                );
+                setTypingUsers(currentTyping);
+            }
+        });
+
+        return () => unsubTyping();
+    }, [user]);
+
     const handleImageSelect = async (event) => {
         const file = event.target.files[0];
         if (!file) return;
@@ -185,6 +206,40 @@ const CommunityChat = () => {
         } catch (error) {
             console.error('Error sending message:', error);
         }
+    };
+
+    const handleTyping = () => {
+        if (!user) return;
+
+        const typingRef = ref(db, `typing/${user.id}`);
+        set(typingRef, {
+            name: user.name,
+            isTyping: true,
+            timestamp: serverTimestamp()
+        });
+
+        if (typingTimeout.current) {
+            clearTimeout(typingTimeout.current);
+        }
+
+        typingTimeout.current = setTimeout(() => {
+            set(typingRef, {
+                name: user.name,
+                isTyping: false,
+                timestamp: serverTimestamp()
+            });
+        }, 2000);
+    };
+
+    const addReaction = async (messageId, reaction) => {
+        if (!user) return;
+
+        const messageRef = ref(db, `messages/${messageId}/reactions/${user.id}`);
+        await set(messageRef, {
+            reaction,
+            userName: user.name,
+            timestamp: serverTimestamp()
+        });
     };
 
     const onEmojiClick = (emojiObject) => {
@@ -271,6 +326,17 @@ const CommunityChat = () => {
                             <div ref={messagesEndRef} />
                         </MessagesContainer>
 
+                        <TypingIndicator>
+                            {typingUsers.size > 0 && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                >
+                                    {Array.from(typingUsers).join(', ')} {typingUsers.size === 1 ? 'is' : 'are'} typing...
+                                </motion.div>
+                            )}
+                        </TypingIndicator>
+
                         <InputForm onSubmit={handleSubmit}>
                             <input
                                 type="file"
@@ -317,7 +383,10 @@ const CommunityChat = () => {
                             ) : (
                                 <Input
                                     value={input}
-                                    onChange={(e) => setInput(e.target.value)}
+                                    onChange={(e) => {
+                                        setInput(e.target.value);
+                                        handleTyping();
+                                    }}
                                     placeholder="Type your message... 😊"
                                     disabled={uploading}
                                 />
@@ -621,6 +690,53 @@ const ClearButton = styled.button`
     
     &:hover {
         color: white;
+    }
+`;
+
+const TypingIndicator = styled.div`
+    padding: 8px 20px;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.9rem;
+    font-style: italic;
+    min-height: 24px;
+`;
+
+const ReactionBar = styled.div`
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+    align-items: center;
+`;
+
+const Reaction = styled.div`
+    background: rgba(255, 255, 255, 0.1);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+`;
+
+const ReactionButtons = styled.div`
+    display: flex;
+    gap: 4px;
+    margin-left: auto;
+`;
+
+const ReactionButton = styled.button`
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    font-size: 1.2rem;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+
+    &:hover {
+        opacity: 1;
+        transform: scale(1.2);
     }
 `;
 
