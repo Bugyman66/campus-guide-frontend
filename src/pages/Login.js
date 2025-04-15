@@ -14,32 +14,28 @@ const Login = () => {
     const [loading, setLoading] = useState(false);
     const location = useLocation();
 
-    const handleLogin = async (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true);
         try {
-            const response = await axios.post( 'https://campus-guide-backend-n015.onrender.com/api/auth/login' ,'http://localhost:5000/api/auth/login', {
-                email,
-                password
-            });
+            const response = await axios.post(
+                'https://campus-guide-backend-n015.onrender.com/api/auth/login',
+                { email, password },
+                {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    withCredentials: true
+                }
+            );
 
-            const { user, token } = response.data;
-            
-            localStorage.setItem('user', JSON.stringify({
-                ...user,
-                isAdmin: user.role === 'admin'
-            }));
-            localStorage.setItem('token', token);
-
-            if (user.role === 'admin') {
-                navigate('/admin');
-            } else {
-                navigate(location.state?.from || '/dashboard');
+            if (response.data.token) {
+                localStorage.setItem('token', response.data.token);
+                localStorage.setItem('user', JSON.stringify(response.data.user));
+                navigate('/dashboard');
             }
         } catch (error) {
+            console.error('Login Error:', error.response?.data || error.message);
             setError(error.response?.data?.message || 'Login failed');
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -63,7 +59,7 @@ const Login = () => {
                 
                 {error && <ErrorMessage>{error}</ErrorMessage>}
                 
-                <Form onSubmit={handleLogin}>
+                <Form onSubmit={handleSubmit}>
                     <InputWrapper>
                         <StyledTextField
                             fullWidth
