@@ -18,7 +18,7 @@ const Login = () => {
         e.preventDefault();
         setLoading(true);
         try {
-            const response = await axios.post('http://localhost:5000/api/auth/login', {
+            const response = await axios.post( 'https://campus-guide-backend-n015.onrender.com' ,'http://localhost:5000/api/auth/login', {
                 email,
                 password
             });
