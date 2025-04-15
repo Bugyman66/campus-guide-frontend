@@ -34,7 +34,7 @@ const Dashboard = () => {
 
     const slides = [
         {
-            image: "/images/campus1.jpg",
+            image: "/images/Capture.png",
             title: "New Library Opening"
         },
         {

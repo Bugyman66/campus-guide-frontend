@@ -6,12 +6,34 @@ import { LocationOn, AttachMoney, Description, Book } from "@mui/icons-material"
 const Accommodations = () => {
     const [accommodations, setAccommodations] = useState([]);
     const [message, setMessage] = useState("");
+    const [transactions, setTransactions] = useState([]);
+    const [showTransactions, setShowTransactions] = useState(false);
 
     useEffect(() => {
         fetch("http://localhost:5000/api/accommodations")
             .then((res) => res.json())
             .then((data) => setAccommodations(data))
             .catch((err) => console.error("Error fetching data:", err));
+
+        // Fetch transaction history
+        const fetchTransactions = async () => {
+            const token = localStorage.getItem("token");
+            if (!token) return;
+
+            try {
+                const response = await fetch("http://localhost:5000/api/bookings/my-bookings", {
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
+                const data = await response.json();
+                setTransactions(data);
+            } catch (error) {
+                console.error("Error fetching transactions:", error);
+            }
+        };
+
+        fetchTransactions();
     }, []);
 
     // Helper function to validate email
@@ -132,6 +154,62 @@ const Accommodations = () => {
                     ))}
                 </AccommodationGrid>
             </ContentWrapper>
+
+            <TransactionSection
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
+            >
+                <TransactionHeader>
+                    <TransactionTitle>Transaction History</TransactionTitle>
+                    <ToggleButton
+                        onClick={() => setShowTransactions(!showTransactions)}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                    >
+                        {showTransactions ? 'Hide' : 'Show'} Transactions
+                    </ToggleButton>
+                </TransactionHeader>
+
+                {showTransactions && (
+                    <TransactionGrid
+                        initial={{ height: 0 }}
+                        animate={{ height: 'auto' }}
+                        transition={{ duration: 0.3 }}
+                    >
+                        {transactions.length > 0 ? (
+                            transactions.map((transaction) => (
+                                <TransactionCard
+                                    key={transaction._id}
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                >
+                                    <TransactionInfo>
+                                        <strong>Accommodation:</strong> 
+                                        {transaction.accommodation?.name || 'N/A'}
+                                    </TransactionInfo>
+                                    <TransactionInfo>
+                                        <strong>Status:</strong>
+                                        <StatusBadge status={transaction.status}>
+                                            {transaction.status}
+                                        </StatusBadge>
+                                    </TransactionInfo>
+                                    <TransactionInfo>
+                                        <strong>Reference:</strong> 
+                                        {transaction.reference || 'N/A'}
+                                    </TransactionInfo>
+                                    <TransactionInfo>
+                                        <strong>Date:</strong>
+                                        {new Date(transaction.createdAt).toLocaleDateString()}
+                                    </TransactionInfo>
+                                </TransactionCard>
+                            ))
+                        ) : (
+                            <NoTransactions>No transactions found</NoTransactions>
+                        )}
+                    </TransactionGrid>
+                )}
+            </TransactionSection>
         </Container>
     );
 };
@@ -243,6 +321,83 @@ const BookButton = styled(motion.button)`
     align-items: center;
     justify-content: center;
     margin-top: 20px;
+`;
+
+const TransactionSection = styled(motion.div)`
+    margin-top: 40px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+`;
+
+const TransactionHeader = styled.div`
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+`;
+
+const TransactionTitle = styled.h2`
+    font-family: 'Orbitron', sans-serif;
+    color: #63f5ef;
+    margin: 0;
+`;
+
+const ToggleButton = styled(motion.button)`
+    background: linear-gradient(135deg, #4a90e2 0%, #63f5ef 100%);
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    color: white;
+    cursor: pointer;
+    font-family: 'Rajdhani', sans-serif;
+`;
+
+const TransactionGrid = styled(motion.div)`
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+`;
+
+const TransactionCard = styled(motion.div)`
+    background: rgba(255, 255, 255, 0.08);
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+`;
+
+const TransactionInfo = styled.div`
+    margin: 8px 0;
+    color: rgba(255, 255, 255, 0.8);
+    font-family: 'Rajdhani', sans-serif;
+    
+    strong {
+        color: #63f5ef;
+        margin-right: 8px;
+    }
+`;
+
+const StatusBadge = styled.span`
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    background: ${props => 
+        props.status === 'Paid' ? 'rgba(99, 245, 239, 0.1)' :
+        props.status === 'Pending' ? 'rgba(255, 193, 7, 0.1)' :
+        'rgba(239, 83, 80, 0.1)'};
+    color: ${props => 
+        props.status === 'Paid' ? '#63f5ef' :
+        props.status === 'Pending' ? '#ffc107' :
+        '#ef5350'};
+`;
+
+const NoTransactions = styled.div`
+    grid-column: 1 / -1;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.6);
+    padding: 20px;
+    font-family: 'Rajdhani', sans-serif;
 `;
 
 export default Accommodations;
