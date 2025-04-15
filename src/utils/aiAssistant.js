@@ -2,7 +2,7 @@ import axios from 'axios';
 
 export const getAIResponse = async (message) => {
     try {
-        const response = await axios.post('http://localhost:5000/api/assistant', {
+        const response = await axios.post('https://campus-guide-backend-n015.onrender.com', {
             message
         }, {
             headers: {
