@@ -37,41 +37,34 @@ const Register = () => {
         return true;
     };
 
-    const handleRegister = async (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
-        setMessage('');
-
-        if (!validateForm()) return;
-
+        
         try {
-            setLoading(true);
-            const res = await axios.post('https://campus-guide-backend-n015.onrender.com' ,'http://localhost:5000/api/auth/register', {
-                name: name.trim(),
-                email: email.trim().toLowerCase(),
-                regNo: regNo.trim(),
-                faculty,
-                department: department.trim(),
-                password
-            });
-
-            setMessage('Registration successful!');
-            console.log('Registration response:', res.data);
-
-            localStorage.setItem('user', JSON.stringify(res.data.user));
-
-            setTimeout(() => {
-                navigate('/login');
-            }, 1500);
-        } catch (err) {
-            console.error('Registration error:', err);
-            setError(
-                err.response?.data?.message ||
-                err.response?.data?.msg ||
-                'Registration failed. Please try again.'
+            const response = await axios.post(
+                'https://campus-guide-backend-n015.onrender.com/api/auth/register',
+                {
+                    name: name.trim(),
+                    email: email.trim().toLowerCase(),
+                    regNo: regNo.trim(),
+                    faculty,
+                    department: department.trim(),
+                    password
+                },
+                {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    withCredentials: true
+                }
             );
-        } finally {
-            setLoading(false);
+
+            if (response.data.success) {
+                navigate('/login');
+            }
+        } catch (error) {
+            console.error('Registration error:', error);
+            setError(error.response?.data?.message || 'Registration failed');
         }
     };
 
@@ -105,7 +98,7 @@ const Register = () => {
                     </Alert>
                 )}
 
-                <Form onSubmit={handleRegister}>
+                <Form onSubmit={handleSubmit}>
                     <StyledTextField
                         label="Full Name"
                         variant="outlined"

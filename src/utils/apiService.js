@@ -1,7 +1,9 @@
 import axios from 'axios';
+import config from '../config/env';
 
 const api = axios.create({
-    baseURL: process.env.REACT_APP_API_URL,
+    baseURL: config.API_URL,
+    withCredentials: true,
     headers: {
         'Content-Type': 'application/json'
     }
@@ -15,14 +17,5 @@ api.interceptors.request.use(config => {
     }
     return config;
 });
-
-// Add response interceptor for error handling
-api.interceptors.response.use(
-    response => response,
-    error => {
-        console.error('API Error:', error.response?.data || error.message);
-        return Promise.reject(error);
-    }
-);
 
 export default api;
