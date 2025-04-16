@@ -5,10 +5,8 @@ const config = {
     },
     production: {
         API_URL: 'https://campus-guide-backend-n015.onrender.com',
-        CORS_ORIGIN: 'https://campus-guide-ir29ynidv-bugyman66s-projects.vercel.app'
+        CORS_ORIGIN: 'https://campus-guide-gamma.vercel.app'
     }
 };
 
-const ENV = process.env.NODE_ENV === 'production' ? 'production' : 'development';
-
-export default config[ENV];
+export default config[process.env.NODE_ENV || 'development'];

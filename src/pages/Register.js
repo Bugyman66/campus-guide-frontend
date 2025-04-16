@@ -39,8 +39,24 @@ const Register = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+        setError('');
+        setLoading(true);
+
         try {
+            // Validate form data
+            if (!email || !password || !name || !faculty) {
+                throw new Error('All fields are required');
+            }
+
+            console.log('Sending registration data:', {
+                name,
+                email,
+                regNo,
+                faculty,
+                department,
+                password: '******' // Hide password in logs
+            });
+
             const response = await axios.post(
                 'https://campus-guide-backend-n015.onrender.com/api/auth/register',
                 {
@@ -59,12 +75,27 @@ const Register = () => {
                 }
             );
 
+            console.log('Registration successful:', response.data);
+
             if (response.data.success) {
                 navigate('/login');
+            } else {
+                setError(response.data.message || 'Registration failed');
             }
         } catch (error) {
-            console.error('Registration error:', error);
-            setError(error.response?.data?.message || 'Registration failed');
+            console.error('Registration failed:', {
+                message: error.message,
+                response: error.response?.data,
+                status: error.response?.status
+            });
+
+            setError(
+                error.response?.data?.message || 
+                error.message || 
+                'Registration failed. Please try again.'
+            );
+        } finally {
+            setLoading(false);
         }
     };
 
