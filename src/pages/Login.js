@@ -11,14 +11,17 @@ const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
+    const [loading, setIsLoading] = useState(false);
     const location = useLocation();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setError('');
+        setIsLoading(true);
+
         try {
             const response = await axios.post(
-                'https://campus-guide-backend-n015.onrender.com/api/auth/login','https://localhost:5000/api/auth/login',
+                `${process.env.REACT_APP_API_URL}/api/auth/login`,
                 { email, password },
                 {
                     headers: {
@@ -34,8 +37,13 @@ const Login = () => {
                 navigate('/dashboard');
             }
         } catch (error) {
-            console.error('Login Error:', error.response?.data || error.message);
-            setError(error.response?.data?.message || 'Login failed');
+            console.error('Login Error:', error);
+            setError(
+                error.response?.data?.message || 
+                'Login failed. Please check your credentials.'
+            );
+        } finally {
+            setIsLoading(false);
         }
     };
 
