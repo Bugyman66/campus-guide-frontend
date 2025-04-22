@@ -1,15 +1,13 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
-import { motion, AnimatePresence } from "framer-motion";
-import { LocationOn, AttachMoney, Description, Book, Close, ArrowForward, ArrowBack } from "@mui/icons-material";
+import { motion } from "framer-motion";
+import { LocationOn, AttachMoney, Description, Book } from "@mui/icons-material";
 
 const Accommodations = () => {
     const [accommodations, setAccommodations] = useState([]);
     const [message, setMessage] = useState("");
     const [transactions, setTransactions] = useState([]);
     const [showTransactions, setShowTransactions] = useState(false);
-    const [selectedAccommodation, setSelectedAccommodation] = useState(null);
-    const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
     useEffect(() => {
         fetch("http://localhost:5000/api/accommodations")
@@ -92,32 +90,6 @@ const Accommodations = () => {
         }
     };
 
-    const handleViewDetails = (acc) => {
-        setSelectedAccommodation(acc);
-        setCurrentImageIndex(0);
-    };
-
-    const handleCloseModal = () => {
-        setSelectedAccommodation(null);
-        setCurrentImageIndex(0);
-    };
-
-    const nextImage = () => {
-        if (selectedAccommodation) {
-            setCurrentImageIndex((prev) => 
-                prev === selectedAccommodation.images.length - 1 ? 0 : prev + 1
-            );
-        }
-    };
-
-    const prevImage = () => {
-        if (selectedAccommodation) {
-            setCurrentImageIndex((prev) => 
-                prev === 0 ? selectedAccommodation.images.length - 1 : prev - 1
-            );
-        }
-    };
-
     return (
         <Container>
             <BackgroundAnimation />
@@ -153,16 +125,6 @@ const Accommodations = () => {
                             transition={{ delay: index * 0.1 }}
                             whileHover={{ scale: 1.02 }}
                         >
-                            <ImageContainer onClick={() => handleViewDetails(acc)}>
-                                <AccommodationImage 
-                                    src={acc.images[0]} 
-                                    alt={acc.name}
-                                />
-                                <ViewDetailsOverlay>
-                                    <span>Click to view details</span>
-                                </ViewDetailsOverlay>
-                            </ImageContainer>
-
                             <AccommodationName>{acc.name}</AccommodationName>
                             
                             <InfoItem>
@@ -191,129 +153,63 @@ const Accommodations = () => {
                         </AccommodationCard>
                     ))}
                 </AccommodationGrid>
-
-                <AnimatePresence>
-                    {selectedAccommodation && (
-                        <ModalOverlay
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={handleCloseModal}
-                        >
-                            <ModalContent
-                                onClick={e => e.stopPropagation()}
-                                initial={{ scale: 0.8, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                exit={{ scale: 0.8, opacity: 0 }}
-                            >
-                                <CloseButton onClick={handleCloseModal}>
-                                    <Close />
-                                </CloseButton>
-
-                                <ImageGallery>
-                                    <GalleryImage 
-                                        src={selectedAccommodation.images[currentImageIndex]}
-                                        alt={`View ${currentImageIndex + 1}`}
-                                    />
-                                    
-                                    <GalleryNav>
-                                        <NavButton onClick={prevImage}>
-                                            <ArrowBack />
-                                        </NavButton>
-                                        <ImageCounter>
-                                            {currentImageIndex + 1} / {selectedAccommodation.images.length}
-                                        </ImageCounter>
-                                        <NavButton onClick={nextImage}>
-                                            <ArrowForward />
-                                        </NavButton>
-                                    </GalleryNav>
-                                </ImageGallery>
-
-                                <ModalInfo>
-                                    <h2>{selectedAccommodation.name}</h2>
-                                    <p><strong>Location:</strong> {selectedAccommodation.location}</p>
-                                    <p><strong>Price:</strong> ₦{selectedAccommodation.price.toLocaleString()}</p>
-                                    <p><strong>Description:</strong> {selectedAccommodation.description}</p>
-                                    
-                                    {selectedAccommodation.features && (
-                                        <FeaturesList>
-                                            <strong>Features:</strong>
-                                            {selectedAccommodation.features.map((feature, index) => (
-                                                <FeatureItem key={index}>{feature}</FeatureItem>
-                                            ))}
-                                        </FeaturesList>
-                                    )}
-
-                                    <BookButton
-                                        onClick={() => handleBooking(selectedAccommodation._id)}
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
-                                    >
-                                        <Book sx={{ marginRight: "8px" }} />
-                                        Book Now
-                                    </BookButton>
-                                </ModalInfo>
-                            </ModalContent>
-                        </ModalOverlay>
-                    )}
-                </AnimatePresence>
-
-                <TransactionSection
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3 }}
-                >
-                    <TransactionHeader>
-                        <TransactionTitle>Transaction History</TransactionTitle>
-                        <ToggleButton
-                            onClick={() => setShowTransactions(!showTransactions)}
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                        >
-                            {showTransactions ? 'Hide' : 'Show'} Transactions
-                        </ToggleButton>
-                    </TransactionHeader>
-
-                    {showTransactions && (
-                        <TransactionGrid
-                            initial={{ height: 0 }}
-                            animate={{ height: 'auto' }}
-                            transition={{ duration: 0.3 }}
-                        >
-                            {transactions.length > 0 ? (
-                                transactions.map((transaction) => (
-                                    <TransactionCard
-                                        key={transaction._id}
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                    >
-                                        <TransactionInfo>
-                                            <strong>Accommodation:</strong> 
-                                            {transaction.accommodation?.name || 'N/A'}
-                                        </TransactionInfo>
-                                        <TransactionInfo>
-                                            <strong>Status:</strong>
-                                            <StatusBadge status={transaction.status}>
-                                                {transaction.status}
-                                            </StatusBadge>
-                                        </TransactionInfo>
-                                        <TransactionInfo>
-                                            <strong>Reference:</strong> 
-                                            {transaction.reference || 'N/A'}
-                                        </TransactionInfo>
-                                        <TransactionInfo>
-                                            <strong>Date:</strong>
-                                            {new Date(transaction.createdAt).toLocaleDateString()}
-                                        </TransactionInfo>
-                                    </TransactionCard>
-                                ))
-                            ) : (
-                                <NoTransactions>No transactions found</NoTransactions>
-                            )}
-                        </TransactionGrid>
-                    )}
-                </TransactionSection>
             </ContentWrapper>
+
+            <TransactionSection
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
+            >
+                <TransactionHeader>
+                    <TransactionTitle>Transaction History</TransactionTitle>
+                    <ToggleButton
+                        onClick={() => setShowTransactions(!showTransactions)}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                    >
+                        {showTransactions ? 'Hide' : 'Show'} Transactions
+                    </ToggleButton>
+                </TransactionHeader>
+
+                {showTransactions && (
+                    <TransactionGrid
+                        initial={{ height: 0 }}
+                        animate={{ height: 'auto' }}
+                        transition={{ duration: 0.3 }}
+                    >
+                        {transactions.length > 0 ? (
+                            transactions.map((transaction) => (
+                                <TransactionCard
+                                    key={transaction._id}
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                >
+                                    <TransactionInfo>
+                                        <strong>Accommodation:</strong> 
+                                        {transaction.accommodation?.name || 'N/A'}
+                                    </TransactionInfo>
+                                    <TransactionInfo>
+                                        <strong>Status:</strong>
+                                        <StatusBadge status={transaction.status}>
+                                            {transaction.status}
+                                        </StatusBadge>
+                                    </TransactionInfo>
+                                    <TransactionInfo>
+                                        <strong>Reference:</strong> 
+                                        {transaction.reference || 'N/A'}
+                                    </TransactionInfo>
+                                    <TransactionInfo>
+                                        <strong>Date:</strong>
+                                        {new Date(transaction.createdAt).toLocaleDateString()}
+                                    </TransactionInfo>
+                                </TransactionCard>
+                            ))
+                        ) : (
+                            <NoTransactions>No transactions found</NoTransactions>
+                        )}
+                    </TransactionGrid>
+                )}
+            </TransactionSection>
         </Container>
     );
 };
@@ -502,184 +398,6 @@ const NoTransactions = styled.div`
     color: rgba(255, 255, 255, 0.6);
     padding: 20px;
     font-family: 'Rajdhani', sans-serif;
-`;
-
-const ImageContainer = styled.div`
-    position: relative;
-    width: 100%;
-    height: 200px;
-    border-radius: 12px;
-    overflow: hidden;
-    margin-bottom: 16px;
-    cursor: pointer;
-`;
-
-const AccommodationImage = styled.img`
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s ease;
-
-    &:hover {
-        transform: scale(1.05);
-    }
-`;
-
-const ViewDetailsOverlay = styled.div`
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    color: white;
-    font-family: 'Rajdhani', sans-serif;
-
-    ${ImageContainer}:hover & {
-        opacity: 1;
-    }
-`;
-
-const ModalOverlay = styled(motion.div)`
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.8);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    padding: 20px;
-`;
-
-const ModalContent = styled(motion.div)`
-    background: #1a1a2e;
-    border-radius: 16px;
-    max-width: 900px;
-    width: 90%;
-    max-height: 90vh;
-    overflow-y: auto;
-    position: relative;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
-    padding: 24px;
-
-    @media (max-width: 768px) {
-        grid-template-columns: 1fr;
-    }
-`;
-
-const ImageGallery = styled.div`
-    position: relative;
-    border-radius: 12px;
-    overflow: hidden;
-`;
-
-const GalleryImage = styled.img`
-    width: 100%;
-    height: 400px;
-    object-fit: cover;
-`;
-
-const GalleryNav = styled.div`
-    position: absolute;
-    bottom: 16px;
-    left: 0;
-    right: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 16px;
-`;
-
-const NavButton = styled.button`
-    background: rgba(0, 0, 0, 0.5);
-    border: none;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    cursor: pointer;
-    transition: background 0.3s ease;
-
-    &:hover {
-        background: rgba(0, 0, 0, 0.8);
-    }
-`;
-
-const ImageCounter = styled.span`
-    background: rgba(0, 0, 0, 0.5);
-    padding: 4px 12px;
-    border-radius: 12px;
-    color: white;
-    font-family: 'Rajdhani', sans-serif;
-`;
-
-const ModalInfo = styled.div`
-    color: white;
-    font-family: 'Rajdhani', sans-serif;
-
-    h2 {
-        color: #63f5ef;
-        margin: 0 0 16px 0;
-    }
-
-    p {
-        margin: 8px 0;
-    }
-
-    strong {
-        color: #63f5ef;
-    }
-`;
-
-const FeaturesList = styled.div`
-    margin: 16px 0;
-`;
-
-const FeatureItem = styled.div`
-    margin: 8px 0;
-    padding-left: 16px;
-    position: relative;
-
-    &:before {
-        content: '•';
-        position: absolute;
-        left: 0;
-        color: #63f5ef;
-    }
-`;
-
-const CloseButton = styled.button`
-    position: absolute;
-    top: 16px;
-    right: 16px;
-    background: rgba(0, 0, 0, 0.5);
-    border: none;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    cursor: pointer;
-    transition: background 0.3s ease;
-
-    &:hover {
-        background: rgba(0, 0, 0, 0.8);
-    }
 `;
 
 export default Accommodations;

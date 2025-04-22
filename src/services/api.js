@@ -9,6 +9,7 @@ const api = axios.create({
     withCredentials: true
 });
 
+// Add request interceptor for auth token
 api.interceptors.request.use(config => {
     const token = localStorage.getItem('token');
     if (token) {
@@ -16,5 +17,18 @@ api.interceptors.request.use(config => {
     }
     return config;
 });
+
+// Add response interceptor for error handling
+api.interceptors.response.use(
+    response => response,
+    error => {
+        console.error('API Error:', {
+            status: error.response?.status,
+            data: error.response?.data,
+            message: error.message
+        });
+        return Promise.reject(error);
+    }
+);
 
 export default api;

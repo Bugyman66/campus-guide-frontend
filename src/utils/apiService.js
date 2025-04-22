@@ -34,6 +34,7 @@ api.interceptors.response.use(
             status: error.response?.status,
             data: error.response?.data,
             message: error.message,
+            
             config: {
                 url: error.config?.url,
                 method: error.config?.method,
